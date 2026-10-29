@@ -79,7 +79,15 @@ def save_lesson():
 
     # 1. Update Student Doc
     try:
-        sem, warn = config.determine_semester(datetime.strptime(date_str, "%Y-%m-%d").date())
+        # Accept either DD/MM/YYYY (from flatpickr) or YYYY-MM-DD (from tests/API)
+        try:
+            lesson_date_obj = datetime.strptime(date_str, "%d/%m/%Y").date()
+        except ValueError:
+            lesson_date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+            
+        date_iso = lesson_date_obj.isoformat()
+        
+        sem, warn = config.determine_semester(lesson_date_obj)
         if not sem:
             return jsonify({"error": warn}), 400
             
@@ -92,7 +100,7 @@ def save_lesson():
                  "concurrency_error": True
              }), 409
 
-        lesson_reqs = build_insert_lesson_request(student_doc, sem, date_str, 
+        lesson_reqs = build_insert_lesson_request(student_doc, sem, date_iso, 
                                                 data['repertoire'], data['vaardigheden'], 
                                                 data['werkpunten'])
         
@@ -102,8 +110,16 @@ def save_lesson():
 
         service.documents().batchUpdate(documentId=student_doc_id, body=body).execute()
         student_updated = True
+    except ValueError as ve:
+        # Pass through expected 400 errors or duplicate check errors
+        if "already exists" in str(ve) or "summer break" in str(ve):
+            return jsonify({"error": str(ve)}), 400
+        return jsonify({"error": f"Fout bij bijwerken studentendocument: {str(ve)}"}), 500
     except Exception as e:
-        return jsonify({"error": f"Fout bij bijwerken studentendocument: {str(e)}"}), 500
+        err_msg = str(e)
+        if "already exists" in err_msg:
+            return jsonify({"error": err_msg}), 400
+        return jsonify({"error": f"Fout bij bijwerken studentendocument: {err_msg}"}), 500
         
     # 2. Update Prep Doc (Optional)
     if data.get('next_ideas'):

@@ -78,7 +78,7 @@ class TestPhase4Scenarios(unittest.TestCase):
             "vaardigheden": "Vard",
             "werkpunten": "Werk"
         })
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 400)
         self.assertIn("already exists", response.get_json()["error"])
 
     @patch('app.get_service')

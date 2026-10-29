@@ -6,6 +6,8 @@
     <title>Piano Lesson Dashboard</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -130,8 +132,8 @@
 
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Datum</label>
-                                    <input type="date" id="lessonDate" class="w-full bg-zinc-900 border border-border rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Datum (DD/MM/YYYY)</label>
+                                    <input type="text" id="lessonDate" placeholder="DD/MM/YYYY" class="w-full bg-zinc-900 border border-border rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
                                 </div>
 
                                 <div>
@@ -232,7 +234,7 @@
             return text.replace(urlRegex, url => `<a href="${url}" target="_blank" class="text-blue-400 hover:underline">${url}</a>`);
         }
 
-        // Set default date to today in Europe/Brussels timezone
+        // Set default date to today in Europe/Brussels timezone using Flatpickr (DD/MM/YYYY)
         function getBrusselsDate() {
             const now = new Date();
             const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -243,7 +245,18 @@
             });
             return formatter.format(now); // Returns YYYY-MM-DD
         }
-        document.getElementById('lessonDate').value = getBrusselsDate();
+
+        const todayParts = getBrusselsDate().split('-');
+        const defaultBrusselsDate = `${todayParts[2]}/${todayParts[1]}/${todayParts[0]}`;
+
+        flatpickr("#lessonDate", {
+            dateFormat: "d/m/Y",
+            defaultDate: defaultBrusselsDate,
+            allowInput: true,
+            locale: {
+                firstDayOfWeek: 1
+            }
+        });
 
         function switchTab(tab) {
             const dashTab = document.getElementById('tabDashboard');
