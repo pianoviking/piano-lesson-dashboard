@@ -37,6 +37,27 @@ def get_student_data(student_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/config', methods=['GET', 'POST'])
+def handle_config():
+    global config
+    if request.method == 'GET':
+        return jsonify({
+            "prep_document_id": config.prep_document_id,
+            "students": config.students
+        })
+    else:
+        data = request.json
+        prep_id = data.get('prep_document_id')
+        students = data.get('students')
+        
+        if prep_id is not None:
+            config.prep_document_id = prep_id
+        if students is not None and isinstance(students, list):
+            config.data['students'] = students
+        
+        config.save()
+        return jsonify({"success": True, "prep_document_id": config.prep_document_id, "students": config.students})
+
 @app.route('/api/save-lesson', methods=['POST'])
 def save_lesson():
     data = request.json

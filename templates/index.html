@@ -1,75 +1,367 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl" class="h-full">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Piano Lesson Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#09090b',
+                        card: '#121215',
+                        border: '#27272a',
+                        muted: '#a1a1aa',
+                        accent: '#3b82f6',
+                        accentHover: '#2563eb'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .card { border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
-        textarea { width: 100%; height: 100px; margin-top: 5px; }
-        button { margin-top: 10px; padding: 10px 20px; }
-        a { color: blue; text-decoration: underline; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     </style>
 </head>
-<body>
-    <h1>Dashboard Piano-lessen</h1>
-    <select id="studentSelect" onchange="loadStudent()">
-        <option value="">Selecteer een student...</option>
-        {% for s in students %}
-        <option value="{{ s.id }}">{{ s.name }}</option>
-        {% endfor %}
-    </select>
+<body class="bg-background text-zinc-100 font-sans h-full selection:bg-blue-500 selection:text-white antialiased">
+    <div class="min-h-full flex flex-col">
+        <!-- Top Navigation Bar -->
+        <header class="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-inner">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                        </svg>
+                    </div>
+                    <span class="font-semibold text-lg tracking-tight">Pianoles Dashboard</span>
+                </div>
+                
+                <!-- Tab Switcher -->
+                <nav class="flex space-x-1 bg-zinc-900 p-1 rounded-xl border border-border">
+                    <button onclick="switchTab('dashboard')" id="tabBtnDashboard" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-zinc-800 text-white shadow-sm">Dashboard</button>
+                    <button onclick="switchTab('config')" id="tabBtnConfig" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-zinc-400 hover:text-white">Configuratie</button>
+                </nav>
+            </div>
+        </header>
 
-    <div class="dashboard" id="content" style="display:none; margin-top: 20px;">
-        <div class="card">
-            <h3>Informatie</h3>
-            <p><strong>Achtergrond:</strong> <pre id="takeIn" style="white-space: pre-wrap;"></pre></p>
-            <p><strong>Vorige les (<span id="prevDate"></span>):</strong></p>
-            <p>Repertoire: <span id="prevRepertoire"></span></p>
-            <p>Vaardigheden: <span id="prevVaardigheden"></span></p>
-            <p>Werkpunten: <span id="prevWerkpunten"></span></p>
-        </div>
-        <div class="card">
-            <h3>Lesinvoer</h3>
-            <label>Datum: <input type="date" id="lessonDate"></label><br><br>
-            <label>Repertoire<textarea id="repertoire"></textarea></label>
-            <label>Vaardigheden<textarea id="vaardigheden"></textarea></label>
-            <label>Werkpunten<textarea id="werkpunten"></textarea></label>
-            <label>Ideeën volgende les<textarea id="nextIdeas"></textarea></label>
-            <button onclick="saveLesson()">Les opslaan</button>
-            <div id="saveStatus" style="margin-top: 10px; font-weight: bold;"></div>
-        </div>
+        <!-- Main Container -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
+            
+            <!-- TAB 1: DASHBOARD -->
+            <div id="tabDashboard" class="space-y-6">
+                <!-- Student Selector Bar -->
+                <div class="bg-card border border-border rounded-xl p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-sm font-semibold uppercase tracking-wider text-muted">Selecteer student</h2>
+                        <p class="text-xs text-zinc-400 mt-0.5">Kies een student om lesgeschiedenis en voorbereiding te laden.</p>
+                    </div>
+                    <div class="w-full sm:w-72">
+                        <select id="studentSelect" onchange="loadStudent()" class="w-full bg-zinc-900 border border-border rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <option value="">Kies student...</option>
+                            {% for s in students %}
+                            <option value="{{ s.id }}">{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="bg-card border border-border rounded-2xl p-16 text-center shadow-sm">
+                    <div class="w-12 h-12 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-white">Geen student geselecteerd</h3>
+                    <p class="text-sm text-zinc-400 mt-1 max-w-sm mx-auto">Selecteer hierboven een student uit de lijst om de lesvoorbereiding en notities te starten.</p>
+                </div>
+
+                <!-- Active Dashboard Content Grid -->
+                <div id="dashboardContent" class="grid grid-cols-1 lg:grid-cols-12 gap-6" style="display:none;">
+                    
+                    <!-- Left Column: Reference Info (Take-in & Previous Lesson) -->
+                    <div class="lg:col-span-5 space-y-6">
+                        <div class="bg-card border border-border rounded-2xl p-6 shadow-sm">
+                            <h3 class="text-xs font-semibold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                Achtergrond & Intake
+                            </h3>
+                            <div id="takeIn" class="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap bg-zinc-900/50 p-4 rounded-xl border border-border/60 max-h-56 overflow-y-auto"></div>
+                        </div>
+
+                        <div class="bg-card border border-border rounded-2xl p-6 shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-xs font-semibold uppercase tracking-wider text-muted flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    Vorige Les
+                                </h3>
+                                <span id="prevDate" class="text-xs font-medium px-2.5 py-1 rounded-full bg-zinc-900 border border-border text-zinc-300"></span>
+                            </div>
+                            
+                            <div class="space-y-4 text-sm">
+                                <div>
+                                    <span class="text-xs text-muted block mb-1 font-medium">Repertoire</span>
+                                    <div id="prevRepertoire" class="text-zinc-200 bg-zinc-900/50 p-3 rounded-xl border border-border/60 whitespace-pre-wrap"></div>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-muted block mb-1 font-medium">Vaardigheden</span>
+                                    <div id="prevVaardigheden" class="text-zinc-200 bg-zinc-900/50 p-3 rounded-xl border border-border/60 whitespace-pre-wrap"></div>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-muted block mb-1 font-medium">Werkpunten</span>
+                                    <div id="prevWerkpunten" class="text-zinc-200 bg-zinc-900/50 p-3 rounded-xl border border-border/60 whitespace-pre-wrap"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Lesson Entry Form -->
+                    <div class="lg:col-span-7">
+                        <div class="bg-card border border-border rounded-2xl p-6 shadow-sm">
+                            <h3 class="text-xs font-semibold uppercase tracking-wider text-muted mb-5 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                Huidige Lesnotitie & Voorbereiding
+                            </h3>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Datum</label>
+                                    <input type="date" id="lessonDate" class="w-full bg-zinc-900 border border-border rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Repertoire</label>
+                                    <textarea id="repertoire" rows="3" placeholder="Besproken stukken en oefeningen..." class="w-full bg-zinc-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Vaardigheden</label>
+                                    <textarea id="vaardigheden" rows="3" placeholder="Techniek, houding, interpretatie..." class="w-full bg-zinc-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Werkpunten</label>
+                                    <textarea id="werkpunten" rows="3" placeholder="Aandachtspunten voor thuis..." class="w-full bg-zinc-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Ideeën volgende les <span class="text-zinc-500 font-normal">(optioneel - update prep document)</span></label>
+                                    <textarea id="nextIdeas" rows="2" placeholder="Notitie voor de centrale voorbereidingslijst..." class="w-full bg-zinc-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"></textarea>
+                                </div>
+
+                                <div class="pt-2 flex items-center justify-between">
+                                    <button onclick="saveLesson()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Les opslaan
+                                    </button>
+                                    <div id="saveStatus" class="text-xs font-medium"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: CONFIGURATIE -->
+            <div id="tabConfig" class="space-y-6" style="display:none;">
+                <div class="bg-card border border-border rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-base font-semibold text-white">Systeemconfiguratie</h2>
+                            <p class="text-xs text-zinc-400 mt-0.5">Beheer centrale Google Docs ID's en studentenkoppelingen.</p>
+                        </div>
+                        <button onclick="saveConfig()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-xl text-sm transition-all shadow-sm">
+                            Wijzigingen opslaan
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Prep Document ID -->
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1.5">Centrale Voorbereiding Google Doc ID</label>
+                            <input type="text" id="configPrepDocId" placeholder="bijv. 1qyjA_9VkrM5HkrmoVvLMHtiDdz4En-_16..." class="w-full bg-zinc-900 border border-border rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-xs">
+                        </div>
+
+                        <!-- Students Table -->
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-xs font-semibold uppercase tracking-wider text-muted">Gekoppelde Studenten</h3>
+                                <button onclick="addStudentRow()" class="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Student toevoegen
+                                </button>
+                            </div>
+
+                            <div class="border border-border rounded-xl overflow-hidden bg-zinc-900/50">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-border text-xs text-muted bg-zinc-900">
+                                            <th class="p-3 font-medium">ID (slug)</th>
+                                            <th class="p-3 font-medium">Studentnaam</th>
+                                            <th class="p-3 font-medium">Google Doc ID</th>
+                                            <th class="p-3 font-medium text-right">Actie</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="configStudentsTableBody" class="divide-y divide-border/60 text-sm">
+                                        <!-- Dynamically populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="configStatus" class="text-xs font-medium"></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
     <script>
+        let currentStudents = [];
+
         function linkify(text) {
+            if (!text) return '';
             const urlRegex = /(https?:\/\/[^\s]+)/g;
-            return text.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
+            return text.replace(urlRegex, url => `<a href="${url}" target="_blank" class="text-blue-400 hover:underline">${url}</a>`);
         }
 
-        // Set date to today using YYYY-MM-DD for the input value
+        // Set default date to today
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
         document.getElementById('lessonDate').value = `${yyyy}-${mm}-${dd}`;
 
+        function switchTab(tab) {
+            const dashTab = document.getElementById('tabDashboard');
+            const confTab = document.getElementById('tabConfig');
+            const dashBtn = document.getElementById('tabBtnDashboard');
+            const confBtn = document.getElementById('tabBtnConfig');
+
+            if (tab === 'dashboard') {
+                dashTab.style.display = 'block';
+                confTab.style.display = 'none';
+                dashBtn.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-zinc-800 text-white shadow-sm";
+                confBtn.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-zinc-400 hover:text-white";
+            } else {
+                dashTab.style.display = 'none';
+                confTab.style.display = 'block';
+                confBtn.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-zinc-800 text-white shadow-sm";
+                dashBtn.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-zinc-400 hover:text-white";
+                loadConfigData();
+            }
+        }
+
         async function loadStudent() {
             const id = document.getElementById('studentSelect').value;
-            if (!id) { document.getElementById('content').style.display = 'none'; return; }
-            
-            const response = await fetch(`/api/student/${id}`);
-            const data = await response.json();
-            
-            document.getElementById('takeIn').innerHTML = linkify(data.take_in_conversation);
-            if (data.latest_lesson) {
-                document.getElementById('prevDate').innerText = data.latest_lesson.date;
-                document.getElementById('prevRepertoire').innerHTML = linkify(data.latest_lesson.repertoire);
-                document.getElementById('prevVaardigheden').innerHTML = linkify(data.latest_lesson.vaardigheden);
-                document.getElementById('prevWerkpunten').innerHTML = linkify(data.latest_lesson.werkpunten);
+            const emptyState = document.getElementById('emptyState');
+            const dashboardContent = document.getElementById('dashboardContent');
+
+            if (!id) {
+                emptyState.style.display = 'block';
+                dashboardContent.style.display = 'none';
+                return;
             }
-            document.getElementById('content').style.display = 'grid';
+            
+            emptyState.style.display = 'none';
+            dashboardContent.style.display = 'grid';
+
+            try {
+                const response = await fetch(`/api/student/${id}`);
+                const data = await response.json();
+                
+                document.getElementById('takeIn').innerHTML = linkify(data.take_in_conversation);
+                if (data.latest_lesson) {
+                    document.getElementById('prevDate').innerText = data.latest_lesson.date;
+                    document.getElementById('prevRepertoire').innerHTML = linkify(data.latest_lesson.repertoire);
+                    document.getElementById('prevVaardigheden').innerHTML = linkify(data.latest_lesson.vaardigheden);
+                    document.getElementById('prevWerkpunten').innerHTML = linkify(data.latest_lesson.werkpunten);
+                } else {
+                    document.getElementById('prevDate').innerText = "Geen";
+                    document.getElementById('prevRepertoire').innerText = "-";
+                    document.getElementById('prevVaardigheden').innerText = "-";
+                    document.getElementById('prevWerkpunten').innerText = "-";
+                }
+            } catch (err) {
+                alert("Fout bij laden studentgegevens: " + err);
+            }
+        }
+
+        async function loadConfigData() {
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                document.getElementById('configPrepDocId').value = data.prep_document_id || '';
+                currentStudents = data.students || [];
+                renderConfigStudents();
+            } catch (err) {
+                console.error("Error loading config:", err);
+            }
+        }
+
+        function renderConfigStudents() {
+            const tbody = document.getElementById('configStudentsTableBody');
+            tbody.innerHTML = '';
+            currentStudents.forEach((s, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-border/40 hover:bg-zinc-900/80 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3"><input type="text" value="${s.id}" onchange="updateStudentField(${index}, 'id', this.value)" class="w-full bg-zinc-900 border border-border rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"></td>
+                    <td class="p-3"><input type="text" value="${s.name}" onchange="updateStudentField(${index}, 'name', this.value)" class="w-full bg-zinc-900 border border-border rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500"></td>
+                    <td class="p-3"><input type="text" value="${s.doc_id}" onchange="updateStudentField(${index}, 'doc_id', this.value)" class="w-full bg-zinc-900 border border-border rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"></td>
+                    <td class="p-3 text-right"><button onclick="removeStudentRow(${index})" class="text-xs text-red-400 hover:text-red-300 font-medium px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition-colors">Verwijder</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStudentField(index, field, value) {
+            currentStudents[index][field] = value.trim();
+        }
+
+        function addStudentRow() {
+            const newId = "student-" + (currentStudents.length + 1);
+            currentStudents.push({ id: newId, name: "Nieuwe Student", doc_id: "" });
+            renderConfigStudents();
+        }
+
+        function removeStudentRow(index) {
+            currentStudents.splice(index, 1);
+            renderConfigStudents();
+        }
+
+        async function saveConfig() {
+            const prepId = document.getElementById('configPrepDocId').value.trim();
+            const statusDiv = document.getElementById('configStatus');
+
+            statusDiv.innerText = "Configuratie opslaan...";
+            statusDiv.style.color = "blue";
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prep_document_id: prepId, students: currentStudents })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    statusDiv.innerText = "Configuratie succesvol opgeslagen! Ververs pagina om selectie bij te werken.";
+                    statusDiv.style.color = "green";
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    statusDiv.innerText = "Fout bij opslaan configuratie.";
+                    statusDiv.style.color = "red";
+                }
+            } catch (err) {
+                statusDiv.innerText = "Netwerkfout: " + err;
+                statusDiv.style.color = "red";
+            }
         }
 
         async function saveLesson() {
@@ -87,7 +379,7 @@
             }
 
             statusDiv.innerText = "Bezig met opslaan...";
-            statusDiv.style.color = "blue";
+            statusDiv.style.color = "#3b82f6";
 
             try {
                 const response = await fetch('/api/save-lesson', {
@@ -101,16 +393,16 @@
                     let msg = "Succesvol opgeslagen! ";
                     if (result.student_updated) msg += "Studentenbestand bijgewerkt. ";
                     if (result.prep_updated) msg += "Voorbereiding bijgewerkt. ";
-                    if (result.doc_url) msg += `<br><a href="${result.doc_url}" target="_blank">Open Google Doc</a>`;
+                    if (result.doc_url) msg += `<br><a href="${result.doc_url}" target="_blank" class="text-blue-400 underline">Open Google Doc</a>`;
                     statusDiv.innerHTML = msg;
-                    statusDiv.style.color = "green";
+                    statusDiv.style.color = "#10b981";
                 } else {
-                    statusDiv.innerText = "Fout bij opslaan: " + (result.error || "Onbekende fout");
-                    statusDiv.style.color = "red";
+                    statusDiv.innerText = "Fout: " + (result.error || "Onbekende fout");
+                    statusDiv.style.color = "#ef4444";
                 }
             } catch (err) {
-                statusDiv.innerText = "Fout bij netwerkverbinding: " + err;
-                statusDiv.style.color = "red";
+                statusDiv.innerText = "Netwerkfout: " + err;
+                statusDiv.style.color = "#ef4444";
             }
         }
     </script>
