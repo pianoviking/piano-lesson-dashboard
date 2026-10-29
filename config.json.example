@@ -1,0 +1,28 @@
+{
+  "prep_document_id": "",
+  "students": [
+    {
+      "id": "student-1",
+      "name": "Example Student",
+      "doc_id": "EXAMPLE_GOOGLE_DOC_ID_HERE"
+    }
+  ],
+  "academic_calendar": {
+    "semester_1": {
+      "start_month": 9,
+      "start_day": 1,
+      "end_month": 12,
+      "end_day": 24
+    },
+    "semester_2": {
+      "start_month": 12,
+      "start_day": 25,
+      "end_month": 6,
+      "end_day": 30
+    }
+  },
+  "semester_headings": {
+    "semester_1": ["Eerste semester", "1e semester", "First semester", "Semester 1"],
+    "semester_2": ["Tweede semester", "2e semester", "Second semester", "Semester 2"]
+  }
+}

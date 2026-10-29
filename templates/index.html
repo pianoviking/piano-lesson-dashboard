@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Piano Lesson Dashboard</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
+        textarea { width: 100%; height: 100px; margin-top: 5px; }
+        button { margin-top: 10px; padding: 10px 20px; }
+        a { color: blue; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard Piano-lessen</h1>
+    <select id="studentSelect" onchange="loadStudent()">
+        <option value="">Selecteer een student...</option>
+        {% for s in students %}
+        <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+    </select>
+
+    <div class="dashboard" id="content" style="display:none; margin-top: 20px;">
+        <div class="card">
+            <h3>Informatie</h3>
+            <p><strong>Achtergrond:</strong> <pre id="takeIn" style="white-space: pre-wrap;"></pre></p>
+            <p><strong>Vorige les (<span id="prevDate"></span>):</strong></p>
+            <p>Repertoire: <span id="prevRepertoire"></span></p>
+            <p>Vaardigheden: <span id="prevVaardigheden"></span></p>
+            <p>Werkpunten: <span id="prevWerkpunten"></span></p>
+        </div>
+        <div class="card">
+            <h3>Lesinvoer</h3>
+            <label>Datum: <input type="date" id="lessonDate"></label><br><br>
+            <label>Repertoire<textarea id="repertoire"></textarea></label>
+            <label>Vaardigheden<textarea id="vaardigheden"></textarea></label>
+            <label>Werkpunten<textarea id="werkpunten"></textarea></label>
+            <label>Ideeën volgende les<textarea id="nextIdeas"></textarea></label>
+            <button onclick="saveLesson()">Les opslaan</button>
+        </div>
+    </div>
+
+    <script>
+        function linkify(text) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
+        }
+
+        async function loadStudent() {
+            const id = document.getElementById('studentSelect').value;
+            if (!id) { document.getElementById('content').style.display = 'none'; return; }
+            
+            const response = await fetch(`/api/student/${id}`);
+            const data = await response.json();
+            
+            document.getElementById('takeIn').innerHTML = linkify(data.take_in_conversation);
+            if (data.latest_lesson) {
+                document.getElementById('prevDate').innerText = data.latest_lesson.date;
+                document.getElementById('prevRepertoire').innerHTML = linkify(data.latest_lesson.repertoire);
+                document.getElementById('prevVaardigheden').innerHTML = linkify(data.latest_lesson.vaardigheden);
+                document.getElementById('prevWerkpunten').innerHTML = linkify(data.latest_lesson.werkpunten);
+            }
+            document.getElementById('content').style.display = 'grid';
+        }
+        function saveLesson() { alert("Schrijven is in deze versie nog niet ingeschakeld."); }
+    </script>
+</body>
+</html>

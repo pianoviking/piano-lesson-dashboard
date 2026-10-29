@@ -2,3 +2,7 @@
 credentials.json
 token.json
 client_secret*.json
+
+.venv/
+__pycache__/
+*.py[cod]

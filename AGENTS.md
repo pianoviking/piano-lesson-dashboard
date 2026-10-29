@@ -12,6 +12,12 @@
 - Report the commands run and their real results. Never claim a test passed unless it ran successfully.
 - If a test fails, inspect the traceback and fix the underlying cause rather than guessing.
 - Show a concise summary of changes and any remaining limitations.
+- Work in stages. Present a plan and wait for approval before beginning a new implementation stage.
+
+## Project specification
+- Treat `PROJECT.md` as the source of truth for product requirements and intended behavior.
+- Treat this file as persistent development rules, not a replacement for the full specification.
+- Flag ambiguities or contradictions rather than silently inventing requirements or dropping existing ones.
 
 ## Google Docs integration
 - Keep the initial implementation read-only until explicitly asked to implement writing.
@@ -19,6 +25,7 @@
 - Use official Google API documentation when uncertain about response structures or scopes.
 - Test against dummy documents before using real student documents.
 - Preserve existing document content and formatting; do not invent API behavior.
+- Never modify real student documents without explicit approval.
 
 ## Scope control
 - Do not perform unrelated refactors or change dependencies without explaining why.
