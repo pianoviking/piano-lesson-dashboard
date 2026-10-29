@@ -224,6 +224,7 @@
 
     <script>
         let currentStudents = [];
+        let currentRevisionId = null;
 
         function linkify(text) {
             if (!text) return '';
@@ -231,12 +232,18 @@
             return text.replace(urlRegex, url => `<a href="${url}" target="_blank" class="text-blue-400 hover:underline">${url}</a>`);
         }
 
-        // Set default date to today
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        document.getElementById('lessonDate').value = `${yyyy}-${mm}-${dd}`;
+        // Set default date to today in Europe/Brussels timezone
+        function getBrusselsDate() {
+            const now = new Date();
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Europe/Brussels',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            return formatter.format(now); // Returns YYYY-MM-DD
+        }
+        document.getElementById('lessonDate').value = getBrusselsDate();
 
         function switchTab(tab) {
             const dashTab = document.getElementById('tabDashboard');
@@ -276,6 +283,7 @@
                 const response = await fetch(`/api/student/${id}`);
                 const data = await response.json();
                 
+                currentRevisionId = data.revision_id;
                 document.getElementById('takeIn').innerHTML = linkify(data.take_in_conversation);
                 if (data.latest_lesson) {
                     document.getElementById('prevDate').innerText = data.latest_lesson.date;
@@ -385,7 +393,15 @@
                 const response = await fetch('/api/save-lesson', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ student_id: studentId, date, repertoire, vaardigheden, werkpunten, next_ideas: nextIdeas })
+                    body: JSON.stringify({ 
+                        student_id: studentId, 
+                        date, 
+                        repertoire, 
+                        vaardigheden, 
+                        werkpunten, 
+                        next_ideas: nextIdeas,
+                        revision_id: currentRevisionId
+                    })
                 });
                 const result = await response.json();
 
@@ -396,6 +412,9 @@
                     if (result.doc_url) msg += `<br><a href="${result.doc_url}" target="_blank" class="text-blue-400 underline">Open Google Doc</a>`;
                     statusDiv.innerHTML = msg;
                     statusDiv.style.color = "#10b981";
+                } else if (response.status === 409) {
+                    statusDiv.innerText = "Conflict: " + result.error;
+                    statusDiv.style.color = "#ef4444";
                 } else {
                     statusDiv.innerText = "Fout: " + (result.error || "Onbekende fout");
                     statusDiv.style.color = "#ef4444";
