@@ -18,36 +18,49 @@ A lightweight, locally hosted web application to manage lesson preparation and l
 ## Installation & Setup Instructions
 
 ### 1. Prerequisites
-- Python 3.9 or higher.
-- Google Cloud Project with the **Google Docs API** enabled.
-- OAuth 2.0 Credentials (`credentials.json`) downloaded from the Google Cloud Console and placed in the project root directory.
+- Python 3.9 or higher (for local development).
+- Docker and Docker Compose (for containerized deployment).
 
-### 2. Environment Setup
-Create and activate a virtual environment, then install dependencies:
+### 2. Configuration & Secrets
+Create a configuration directory (e.g., `./data`) on your host machine to store persistent state:
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+mkdir data
 ```
+Copy your Google Cloud credentials to this directory:
+- `credentials.json` (from Google Cloud Console).
+- `token.json` (generate by running `python read_test_doc.py <doc_id>` on your host once, then copy the generated `token.json` into `./data/`).
 
-### 3. Configuration
-1. Copy `config.json.example` to `config.json`:
+Create `data/config.json` (you can copy `config.json.example` as a starting point).
+
+### 3. Containerized Deployment
+1. Build the application image:
    ```bash
-   cp config.json.example config.json
+   docker compose build
    ```
-2. Open `config.json` and fill in:
-   - `prep_document_id`: The Google Document ID for your central preparation document.
-   - `students`: A list of student objects, each containing:
-     - `id`: A unique slug (e.g. `"anna-kowalska"`).
-     - `name`: Full display name matching the prep document and student records.
-     - `doc_id`: The Google Document ID of the student's shared document.
+2. Start the container:
+   ```bash
+   docker compose up -d
+   ```
+3. Access the dashboard at `http://localhost:5000`.
 
-Alternatively, you can configure these interactively through the **Configuratie** tab in the web interface once the server is running.
+To run on a home server (LAN access), update the `HOST_BIND` variable in `compose.yaml` (or via `.env`) to `0.0.0.0`.
+
+### 4. Updating the image
+1. Pull the latest code.
+2. Rebuild the image:
+   ```bash
+   docker compose build
+   docker compose up -d
+   ```
+Because persistent files (`config.json`, `token.json`) are mounted in `./data/`, your configuration and authentication remain intact after container recreation.
+
+### 5. Troubleshooting
+- **Permission Denied**: Ensure the user running the container has write access to your `./data` directory on the host. You can override the user in `compose.yaml` using `PUID` and `PGID` (default 1000:1000).
+- **OAuth Failures**: Check the logs (`docker compose logs`) for clear error messages. If `token.json` is missing in `/data/`, you must perform the OAuth authorization on your host and copy the resulting `token.json` to `./data/`.
 
 ---
 
-## Running the Application
-
+## Local Development (Native)
 Start the local Flask development server:
 ```bash
 source .venv/bin/activate
@@ -55,7 +68,6 @@ python3 app.py
 ```
 Open your browser at `http://localhost:5000`.
 
-When you first authenticate, follow the browser prompt to sign in with your school Google account and grant the requested read/write permissions.
 
 ---
 
@@ -64,6 +76,14 @@ When you first authenticate, follow the browser prompt to sign in with your scho
 - **Atomic-style coordination**: When saving a lesson, the application first updates the student's shared Google Doc. If successful, it proceeds to update the central preparation document if "Next lesson ideas" were provided.
 - **Concurrency protection**: If another user (or the student) modifies the Google Doc while you have the dashboard open, revision checking detects the mismatch and prompts you to refresh to prevent data loss.
 - **Duplicate warning**: If a lesson entry for the exact same date already exists, the application warns you before appending to avoid duplicate entries.
+
+---
+
+## Backups & Recovery
+
+The only persistent state is stored in your mounted configuration directory (`./data`).
+- **Backup**: Regularly back up the `data/` directory. It contains your student mappings (`config.json`) and your Google access tokens (`token.json`).
+- **Recovery**: To recover on a new machine, install Docker, copy your `data/` directory, and run `docker compose up -d`.
 
 ---
 

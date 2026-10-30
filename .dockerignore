@@ -1,0 +1,29 @@
+# Environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.git/
+
+# Configuration and secrets (must be mounted, never in image)
+config.json
+credentials.json
+token.json
+data/
+
+# Docker files
+Dockerfile
+compose.yaml
+.dockerignore
+
+# Documentation and project planning
+*.md
+STAGES.md
+
+# Testing and development scripts
+test_*.py
+inspect_doc.py
+test_bold_fix.py
+test_write_script.py
+tool-test.txt
+read_test_doc.py.bak

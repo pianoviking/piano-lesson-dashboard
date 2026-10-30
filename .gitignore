@@ -1,8 +1,11 @@
-# Google OAuth credentials and tokens
+# Persistent configuration and secrets
+config.json
 credentials.json
 token.json
 client_secret*.json
+data/
 
 .venv/
 __pycache__/
 *.py[cod]
+.pytest_cache/

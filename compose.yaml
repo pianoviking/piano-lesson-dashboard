@@ -1,0 +1,23 @@
+services:
+  piano-lesson-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: piano-lesson-dashboard:latest
+    container_name: piano-lesson-dashboard
+    restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
+    ports:
+      # Bound to 127.0.0.1 by default so it is not exposed publicly.
+      # Change HOST_BIND=0.0.0.0 in .env for LAN access on a home server.
+      - "${HOST_BIND:-127.0.0.1}:${PORT:-5000}:5000"
+    volumes:
+      # Mount persistent host-side directory containing config.json, credentials.json, and token.json
+      - ./data:/data
+    environment:
+      - PORT=5000
+      - CONFIG_PATH=/data/config.json
+      - CREDENTIALS_PATH=/data/credentials.json
+      - TOKEN_PATH=/data/token.json
+      - OAUTH_ALLOW_BROWSER=false
+      - HOME=/tmp

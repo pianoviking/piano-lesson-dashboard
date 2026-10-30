@@ -28,7 +28,9 @@ DEFAULT_CONFIG = {
 }
 
 class AppConfig:
-    def __init__(self, config_dict=None, config_path=DEFAULT_CONFIG_PATH):
+    def __init__(self, config_dict=None, config_path=None):
+        if config_path is None:
+            config_path = os.environ.get("CONFIG_PATH", DEFAULT_CONFIG_PATH)
         self.config_path = config_path
         self.data = config_dict if config_dict is not None else self._load_or_create()
 
