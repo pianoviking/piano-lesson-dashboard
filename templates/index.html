@@ -120,6 +120,14 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="bg-card border border-border rounded-2xl p-6 shadow-sm">
+                            <h3 class="text-xs font-semibold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                Huidige Voorbereiding
+                            </h3>
+                            <div id="currentPrep" class="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap bg-zinc-900/50 p-4 rounded-xl border border-border/60 max-h-40 overflow-y-auto"></div>
+                        </div>
                     </div>
 
                     <!-- Right Column: Lesson Entry Form -->
@@ -151,17 +159,32 @@
                                     <textarea id="werkpunten" rows="3" placeholder="Aandachtspunten voor thuis..." class="w-full bg-zinc-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"></textarea>
                                 </div>
 
-                                <div>
-                                    <label class="block text-xs font-medium text-zinc-400 mb-1.5">Ideeën volgende les <span class="text-zinc-500 font-normal">(optioneel - update prep document)</span></label>
-                                    <textarea id="nextIdeas" rows="2" placeholder="Notitie voor de centrale voorbereidingslijst..." class="w-full bg-zinc-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"></textarea>
-                                </div>
-
                                 <div class="pt-2 flex items-center justify-between">
                                     <button onclick="saveLesson()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center gap-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                         Les opslaan
                                     </button>
                                     <div id="saveStatus" class="text-xs font-medium"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prep Section -->
+                        <div class="bg-card border border-border rounded-2xl p-6 shadow-sm mt-6">
+                            <h3 class="text-xs font-semibold uppercase tracking-wider text-muted mb-5 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                Voorbereiding bijwerken
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <textarea id="newPrep" rows="3" placeholder="Nieuwe lesvoorbereiding..." class="w-full bg-zinc-900 border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-y"></textarea>
+                                </div>
+                                <div class="pt-2">
+                                    <button onclick="savePrep()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Voorbereiding opslaan
+                                    </button>
+                                    <div id="prepStatus" class="text-xs font-medium mt-2"></div>
                                 </div>
                             </div>
                         </div>
@@ -298,6 +321,7 @@
                 
                 currentRevisionId = data.revision_id;
                 document.getElementById('takeIn').innerHTML = linkify(data.take_in_conversation);
+                document.getElementById('currentPrep').innerText = data.current_prep || "-";
                 if (data.latest_lesson) {
                     document.getElementById('prevDate').innerText = data.latest_lesson.date;
                     document.getElementById('prevRepertoire').innerHTML = linkify(data.latest_lesson.repertoire);
@@ -382,6 +406,42 @@
             } catch (err) {
                 statusDiv.innerText = "Netwerkfout: " + err;
                 statusDiv.style.color = "red";
+            }
+        }
+
+        async function savePrep() {
+            const studentId = document.getElementById('studentSelect').value;
+            const prepText = document.getElementById('newPrep').value;
+            const statusDiv = document.getElementById('prepStatus');
+
+            if (!studentId) {
+                alert("Selecteer een student.");
+                return;
+            }
+
+            statusDiv.innerText = "Bezig met opslaan...";
+            statusDiv.style.color = "#3b82f6";
+
+            try {
+                const response = await fetch('/api/save-prep', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id: studentId, prep_text: prepText })
+                });
+
+                if (response.ok) {
+                    statusDiv.innerText = "Voorbereiding succesvol bijgewerkt!";
+                    statusDiv.style.color = "#10b981";
+                    document.getElementById('currentPrep').innerText = prepText;
+                    document.getElementById('newPrep').value = "";
+                } else {
+                    const result = await response.json();
+                    statusDiv.innerText = "Fout: " + (result.error || "Onbekende fout");
+                    statusDiv.style.color = "#ef4444";
+                }
+            } catch (err) {
+                statusDiv.innerText = "Netwerkfout: " + err;
+                statusDiv.style.color = "#ef4444";
             }
         }
 

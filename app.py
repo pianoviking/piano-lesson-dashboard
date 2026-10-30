@@ -31,8 +31,20 @@ def get_student_data(student_id):
 
     try:
         service = get_service()
-        document = service.documents().get(documentId=doc_id).execute()
-        parsed = parse_student_document(document)
+        student_doc = service.documents().get(documentId=doc_id).execute()
+        parsed = parse_student_document(student_doc)
+        
+        # Also fetch prep document to get the student's current prep
+        prep_id = config.prep_document_id
+        current_prep = ""
+        if prep_id:
+            prep_doc = service.documents().get(documentId=prep_id).execute()
+            prep_data = parse_prep_document(prep_doc)
+            prep_entry = find_student_prep(prep_data, student.get("name"))
+            if prep_entry:
+                current_prep = prep_entry.get("prep_text", "")
+        
+        parsed["current_prep"] = current_prep
         return jsonify(parsed)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -122,21 +134,35 @@ def save_lesson():
         return jsonify({"error": f"Fout bij bijwerken studentendocument: {err_msg}"}), 500
         
     # 2. Update Prep Doc (Optional)
-    if data.get('next_ideas'):
-        try:
-            prep_doc = service.documents().get(documentId=prep_doc_id).execute()
-            prep_reqs = build_update_prep_request(prep_doc, student['name'], data['next_ideas'])
-            service.documents().batchUpdate(documentId=prep_doc_id, body={'requests': prep_reqs}).execute()
-            prep_updated = True
-        except Exception as e:
-            errors.append(f"Fout bij bijwerken voorbereidingsdocument: {str(e)}")
-            
+    # (Removed)
+
     return jsonify({
         "student_updated": student_updated,
-        "prep_updated": prep_updated,
+        "prep_updated": False,
         "errors": errors,
         "doc_url": f"https://docs.google.com/document/d/{student_doc_id}/edit"
     }), 200 if not errors else 207
+
+@app.route('/api/save-prep', methods=['POST'])
+def save_prep():
+    data = request.json
+    student_id = data.get('student_id')
+    prep_text = data.get('prep_text')
+    
+    student = config.get_student(student_id)
+    if not student:
+        return jsonify({"error": "Student niet gevonden"}), 404
+        
+    service = get_service()
+    prep_doc_id = config.prep_document_id
+    
+    try:
+        prep_doc = service.documents().get(documentId=prep_doc_id).execute()
+        prep_reqs = build_update_prep_request(prep_doc, student['name'], prep_text)
+        service.documents().batchUpdate(documentId=prep_doc_id, body={'requests': prep_reqs}).execute()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": f"Fout bij bijwerken voorbereidingsdocument: {str(e)}"}), 500
 
 if __name__ == '__main__':
     host = os.environ.get("HOST", "127.0.0.1")
