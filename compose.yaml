@@ -1,9 +1,6 @@
 services:
   piano-lesson-dashboard:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: piano-lesson-dashboard:latest
+    image: ghcr.io/pianoviking/piano-lesson-dashboard:latest
     container_name: piano-lesson-dashboard
     restart: unless-stopped
     user: "1000:3002"
